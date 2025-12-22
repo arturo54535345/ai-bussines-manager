@@ -1,4 +1,12 @@
 {
+  "name": "ai-business-manager",
+  "version": "1.0.0",
+  "description": "Mi proyecto de gestión con IA",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
