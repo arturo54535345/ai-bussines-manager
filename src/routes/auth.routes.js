@@ -5,5 +5,6 @@ const authController = require( '../controllers/auth.controller');//trameos el c
 
 //cuando alguien envie datos POST a /register activara la funcion register
 router.post('/register', authController.register);
+router.post('/login', authController.login);
 
 module.exports = router;
