@@ -5,6 +5,7 @@ const app = express(); //creamos la app
 const authRoutes = require('./routes/auth.routes'); //rutas de autenticacion
 const clientesRoutes = require('./routes/clients.routes');//rutas de clientes
 const tasksRoutes = require('./routes/tasks.routes');//rutas de tareas
+const aiRoutes = require('./routes/ai.routes');//rutas de la ia 
 
 //Middlewares(filtros)
 
@@ -13,6 +14,7 @@ app.use(express.json()); //permite que nuestra web entienda cuando le envian dat
 app.use('/api/auth', authRoutes); //todas las rutas que empiecen con /api/auth seran manejadas por authRoutes
 app.use('api/clients', clientesRoutes);//permita que todas las rutas que empiecen con /api/clients sean menajadas por clientesRoutes
 app.use('/api/tasks', tasksRoutes);//permite que todas las rutas sean manejadas por tasksRoutes
+app.use('/api/ai', aiRoutes);//permite que todas las rutas sean manejadas por aiRoutes
 
 //ruta de prueba 
 app.get('/', (req, res) => {
