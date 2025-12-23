@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
+    const authHeader = req.headers.authorization;//buscamo el token en la cabecera Authorization
     const token = req.headers.authorization?.split("")[1]; // buscamos el token en la cabecera Authorization
     if(!token){
         return res.status(401).json({message: 'No tienes permisos para acceder'});//si no hay token no lo dejamos pasar y se retorna error
