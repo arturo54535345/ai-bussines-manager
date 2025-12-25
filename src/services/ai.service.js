@@ -6,7 +6,7 @@ exports.analyzeBusinessData= (Client, tasks) =>{
     //creamos el prompt osea la instruccion para la ia
     const prompt = `
     Eres un consultor de negocios experto que has ayudado a mejorar miles de negocios con tus consejos.
-    Actualmente el negocio tiene ${clients.length} clientes.
+    Actualmente el negocio tiene ${Client.length} clientes.
     Hay un total de ${tasks.length} tareas registradas.
     -Tareas pendientes ${pendingTasks}
     -Tareas completadas ${completedTask}

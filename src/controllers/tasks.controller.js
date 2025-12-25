@@ -8,7 +8,7 @@ exports.createTask = async (req, res) => {
         const newTask = new Task({
             title,
             client,//el id del cliente al que pertenece
-            satatus,//el estado de la tarea
+            status,//el estado de la tarea
             owner: req.user.id//el id del usuario crea la tarea, viene del token
         });
 
