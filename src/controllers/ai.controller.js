@@ -8,7 +8,7 @@ exports.getBusinessAdvice = async (req, res) =>{
         const clients = await Client.find({owner:req.user.id});
         const tasks = await Task.find({owner:req.user.id});
 
-        const advice = aiService.analyzeBusinessData(clients,tasks);//le pasamos esos datos al servicio de IA para que lo analice
+        const advice = await aiService.analyzeBusinessData(clients,tasks);//le pasamos esos datos al servicio de IA para que lo analice
 
         //devolvemos la respuesta inteligente
         res.json({

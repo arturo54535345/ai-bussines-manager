@@ -1,19 +1,29 @@
-//esto se encarga de redactar el mensaje para la ia
-exports.analyzeBusinessData= (Client, tasks) =>{
-    const pendingTasks = tasks.filter(t=> t.status === 'pending').length;//contamos cuantas tareas hay de cada tipo para darle a la ia
-    const completedTask = tasks.filter(t=> t.status === 'completed').length;
+const {GoogleGenerativeAI} = require('@google/generative-ai');
 
-    //creamos el prompt osea la instruccion para la ia
-    const prompt = `
-    Eres un consultor de negocios experto que has ayudado a mejorar miles de negocios con tus consejos.
-    Actualmente el negocio tiene ${Client.length} clientes.
-    Hay un total de ${tasks.length} tareas registradas.
-    -Tareas pendientes ${pendingTasks}
-    -Tareas completadas ${completedTask}
+//inicio la ia con la clave secreta
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
 
-    Basado en esos datos, dame un consejo breve (maximo 3 frases) sobre que deberia priorizar el dueño del negocio hoy, el mes y el año completo.
-    `;
+exports.analyzeBusinessData = async (clients, tasks) =>{
+    try{
+        const pendingTasks = tasks.filter(t => t.status === 'pending').length;
+        const completedTasks = tasks.filter(t => t.status === 'completed').length;
 
-    //esto de aqui sera provisional hasta que conectemos la API real
-    return `Analisis de IA: Tienes ${pendingTasks} tareas acumuladas. Deberias contactar a tus clientes ${clients.length} clientes para cerrar proyectos pendientes.`;
+        const prompt= `
+        Eres un consultor de negocios experto.
+        El negocio tiene ${clients.length} clientes.
+        Tareas totales: ${tasks.length} (Pendientes: ${pendingTasks}, Completadas: ${completedTasks}).
+        Basado en esto, dame un consejo de 3 frases para priorizar hoy.
+        `;
+
+        //envio el mensaje a la IA
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+
+        //devuelvo el texto que la ia ha respondido
+        return response.text();
+    }catch(error){
+        console.error("Error en la IA", error);
+        return "Lo siento, no pude generar un consejo en este momento.";
+    }
 };
