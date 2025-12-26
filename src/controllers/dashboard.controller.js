@@ -1,4 +1,4 @@
-const { Activity } = require('react');
+const { Activity } = require('../models/Activity');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
 

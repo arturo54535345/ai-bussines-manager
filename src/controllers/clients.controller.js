@@ -1,5 +1,6 @@
-const { Activity } = require('react');
+const { Activity } = require('../models/Activity')
 const Task = require('../models/Task');
+const Client = require('../models/Client');
 
 //creamos un cliente nuevo
 exports.createClient = async (req, res) =>{
@@ -27,7 +28,7 @@ exports.createClient = async (req, res) =>{
 //listar todos los clientes con el buscador o poniendole filtros 
 exports.getClients = async (req , res) =>{
     try{
-        const {search, page = 1, limit = 10} = req.query;//sacmos los datos mediante la url 
+        const {search, page = 1, limit = 10, category} = req.query;//sacmos los datos mediante la url 
 
         //filtro que solo sea del dueño y que este vacio( se hace un borrado siempre )
         let query = {owner: req.user.id, active: true};
@@ -83,7 +84,7 @@ exports.updateClient = async (req, res) =>{
         );
         await new Activity({
             user: req.user.id,
-            action: `Actualizo al cliente: ${newClient.name}`,
+            action: `Actualizo al cliente: ${updateClient.name}`,
             type: 'client'
         }).save();
         res.json(updatedClient);

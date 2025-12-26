@@ -14,7 +14,7 @@ const TaskSchema = new mongoose.Schema({
         default: 'medium',
     },
     dueData:{//le añade una fecha de vencimiento
-        type: Data
+        type: Date
     },
     notes: [{//notas de seguimiento
         content: String,
