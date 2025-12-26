@@ -1,4 +1,4 @@
-const { Activity } = require('../models/Activity')
+const Activity = require('../models/Activity')
 const Task = require('../models/Task');
 const Client = require('../models/Client');
 
@@ -84,7 +84,7 @@ exports.updateClient = async (req, res) =>{
         );
         await new Activity({
             user: req.user.id,
-            action: `Actualizo al cliente: ${updateClient.name}`,
+            action: `Actualizo al cliente: ${updatedClient.name}`,
             type: 'client'
         }).save();
         res.json(updatedClient);
@@ -97,7 +97,7 @@ exports.updateClient = async (req, res) =>{
 exports.deleteClient = async (req, res) =>{
     try{
         //no lo borro de la base de datos por asi decirlo simplemente lo desactivo
-        const cliet = await Client.findOneAndUpdate(
+        const client = await Client.findOneAndUpdate(
             {_id: req.params.id, owner: req.user.id},
             {active: false},
             {new: true}
@@ -105,7 +105,7 @@ exports.deleteClient = async (req, res) =>{
         if (!client) return res.status(404).json({message: "Cliente no encontrado"});
         await new Activity({
             user: req.user.id,
-            action: `Elimino al cliente: ${newClient.name}`,
+            action: `Elimino al cliente: ${client.name}`,
             type: 'client'
         }).save();
         res.json({message: "Cliente desactivado correctamente"});
