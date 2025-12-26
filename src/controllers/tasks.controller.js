@@ -43,3 +43,15 @@ exports.updateTask = async (req, res) =>{
         res.status(500).json({message: "Error al actualizar la tarea"});
     }
 };
+
+//funcion para eleminar tareas
+exports.deleteTask = async (req, res) =>{
+    try{
+        const task = await Task.findOneAndDelete({_id: req.params.id, owner: req.user.id});
+        if(!task) return res.status(404).json({message: "Tarea no encontrada"});
+
+        res.json({message: "Tarea elminada correctamente"});
+    }catch(error){
+        res.status(500).json({message: "Error al eliminar la tarea"});
+    }
+};
