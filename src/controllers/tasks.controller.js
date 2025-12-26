@@ -45,7 +45,7 @@ exports.updateTask = async (req, res) =>{
         if(req.body.status === 'completed'){
         await new Activity({
             user: req.user.id,
-            action: `Creo una tarea nueva: ${task.title}`,
+            action: `Completo la tarea: ${task.title}`,
             type: 'task'
         }).save();
         }
