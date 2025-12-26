@@ -3,12 +3,15 @@ const Task = require('../models/Task');//importamos el modelo de Task
 //funcion para crear una tarea
 exports.createTask = async (req, res) => {
     try{
-        const {title, client, status} = req.body;//obtenemos los datos de la tarea desde el cuerpo de la peticion
+        const {title, client, status, description, priority, dueDate} = req.body;//obtenemos los datos de la tarea desde el cuerpo de la peticion
 
         const newTask = new Task({
             title,
+            description,//la informacion de la tarea
             client,//el id del cliente al que pertenece
             status,//el estado de la tarea
+            priority,//la prioridad de la tarea 
+            dueDate,//guardamos la fecha
             owner: req.user.id//el id del usuario crea la tarea, viene del token
         });
 
@@ -38,6 +41,13 @@ exports.updateTask = async (req, res) =>{
             req.body,
             {new: true},
         );
+        if(req.body.status === 'completed'){
+        await new Activity({
+            user: req.user.id,
+            action: `Creo una tarea nueva: ${newClient.name}`,
+            type: 'client'
+        }).save();
+        }
         res.json(task)
     }catch(error){
         res.status(500).json({message: "Error al actualizar la tarea"});

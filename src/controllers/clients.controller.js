@@ -1,3 +1,4 @@
+const { Activity } = require('react');
 const Task = require('../models/Task');
 
 //creamos un cliente nuevo
@@ -9,6 +10,11 @@ exports.createClient = async (req, res) =>{
             owner: req.user.id// el ID viene del middleware
         });
         await newClient.save();
+        await new Activity({
+            user: req.user.id,
+            action: `Creo al cliente: ${newClient.name}`,
+            type: 'client'
+        }).save();
         res.status(201).json(newClient);
     }catch(error){
         res.status(500).json({
@@ -30,6 +36,11 @@ exports.getClients = async (req , res) =>{
         if(search){
             query.name = { $regex: search, $options: 'i'};
         }
+        //si se añade una categoria se añade al filtro
+        if(category){
+            query.category = category;
+        }
+
         const clients = await Client.find(query)
         .limit(limit * 1)//la cantidad de maxima que nos saldra en el buscador osea un max de 10 
         .skip((page - 1)* limit)//cuantos nos saltamos
@@ -70,6 +81,11 @@ exports.updateClient = async (req, res) =>{
             req.body,//aqui es donde llegan los cambios
             {new: true, runValidators: true}//new lo que hace es devolver el objeto ya cambiado 
         );
+        await new Activity({
+            user: req.user.id,
+            action: `Actualizo al cliente: ${newClient.name}`,
+            type: 'client'
+        }).save();
         res.json(updatedClient);
     }catch(error){
         res.status(500).json({message: "Error al actualizar"})
@@ -86,6 +102,11 @@ exports.deleteClient = async (req, res) =>{
             {new: true}
         );
         if (!client) return res.status(404).json({message: "Cliente no encontrado"});
+        await new Activity({
+            user: req.user.id,
+            action: `Elimino al cliente: ${newClient.name}`,
+            type: 'client'
+        }).save();
         res.json({message: "Cliente desactivado correctamente"});
     }catch(error){
         res.status(500).json({message: "Error al elminar el cliente"});

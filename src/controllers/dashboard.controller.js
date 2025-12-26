@@ -1,3 +1,4 @@
+const { Activity } = require('react');
 const Client = require('../models/Client');
 const Task = require('../models/Task');
 
@@ -7,6 +8,13 @@ exports.getStats = async (req, res) =>{
 
         //aqui cuento los clientes activos
         const totalClients = await Client.countDocuments({owner: userId, active: true});
+
+        const clientSummary = {
+            total: totalClients,
+            vips: await Client.countDocuments({owner: userId, active: true, category: 'VIP'}),
+            prospects: await Client.countDocuments({owner: userId, active: true, category: 'Prospect'}),
+            active: await Client.countDocuments({owner: userId, active: true, category: 'Active'}),
+        };
 
         //hago un resumen de las tareas por el estado de ellas 
         const tasks = await Task.find({owner: userId});
@@ -22,11 +30,16 @@ exports.getStats = async (req, res) =>{
         .sort({createdAt: -1})
         .limit(5)
         .populate('client', 'name');
+        
+        //buscamos las ultimas 10 actividades del usuario
+        const recentActivity = await Activity.find({user: userId})
+        .sort({createdAt: -1})
+        .limit(10)
 
         res.json({
-            totalClients,
+            clientSummary,//este es el resumen que enviaremos
             taskSummary: stats,
-            recentActivity: recentTasks
+            recentActivity
         });
     }catch(error){
         res.status(500).json({message: "Error al generar estadistica"});
