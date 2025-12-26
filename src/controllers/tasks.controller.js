@@ -29,3 +29,17 @@ exports.getTasks = async (req, res) =>{
         res.status(500).json({message: 'Error al obtener las tareas', error: error.message});
     }
 };
+
+//funcion para poder editar las tareas
+exports.updateTask = async (req, res) =>{
+    try{
+        const task = await Task.findOneAndUpdate(
+            {_id: req.params.id, owner: req.user.id},
+            req.body,
+            {new: true},
+        );
+        res.json(task)
+    }catch(error){
+        res.status(500).json({message: "Error al actualizar la tarea"});
+    }
+};

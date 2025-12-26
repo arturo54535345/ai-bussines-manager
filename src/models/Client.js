@@ -3,13 +3,21 @@ const mongoose = require('mongoose');
 const ClientSchema = new mongoose.Schema({
     name: {type: String, required: true},
     email: {type: String},
-    phone: {type: String},
-    //decimos que este cliente pertenece a un usuario 
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+    logoUrl: { type: String, default: ""}, 
+
+    //ficha tecnica de los clientes 
+    technicalSheet: {
+        industry: {type: String, required: true},
+        taxId: {type: String, required: flase},
+        contactPerson: {type: String, required: true},
+        website: {type: String},
+        address: {type: String},
+        notes: {type: String},
+        employees: {type: Number},
     },
-},{timestamps: true});
+    owner: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true}
+}, {timestamp: true});
 
 module.exports = mongoose.model('Client', ClientSchema);
+
+
