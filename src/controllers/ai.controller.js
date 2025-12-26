@@ -1,14 +1,16 @@
 const Client = require('../models/Client');
 const Task = require('../models/Task');
+const Activity = require('../models/Activity');
 const aiService = require('../services/ai.service');
 
 exports.getBusinessAdvice = async (req, res) =>{
     try{
-        //buscamos todos los clientes y tareas de este usauario
+        //buscamos todos los clientes,tareas y actividades de este usauario
         const clients = await Client.find({owner:req.user.id});
         const tasks = await Task.find({owner:req.user.id});
+        const activities = (await Activity.find({user: userId})).toSorted({createdAt: -1}).limit(3);
 
-        const advice = await aiService.analyzeBusinessData(clients,tasks);//le pasamos esos datos al servicio de IA para que lo analice
+        const advice = await aiService.analyzeBusinessData(clients,tasks, activities);//le pasamos esos datos al servicio de IA para que lo analice
 
         //devolvemos la respuesta inteligente
         res.json({
