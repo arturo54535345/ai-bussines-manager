@@ -1,4 +1,5 @@
 const Task = require('../models/Task');//importamos el modelo de Task 
+const Activity = require('../models/Activity');
 
 //funcion para crear una tarea
 exports.createTask = async (req, res) => {
@@ -44,8 +45,8 @@ exports.updateTask = async (req, res) =>{
         if(req.body.status === 'completed'){
         await new Activity({
             user: req.user.id,
-            action: `Creo una tarea nueva: ${newClient.name}`,
-            type: 'client'
+            action: `Creo una tarea nueva: ${task.title}`,
+            type: 'task'
         }).save();
         }
         res.json(task)
