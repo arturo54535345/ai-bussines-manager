@@ -14,12 +14,12 @@ exports.getStats = async (req, res) =>{
             totalTasks: tasks.length,
             pending: tasks.filter(t => t.status === 'pending').length,
             completed: tasks.filter(t => t.status === 'completed').length,
-            highPriority: tasks.filter(t => t.prority === 'high' && t.status !== 'completed').length,
+            highPriority: tasks.filter(t => t.priority === 'high' && t.status !== 'completed').length,
         };
 
         //ultimos movimientos
         const recentTasks = await Task.find({owner: userId})
-        .sort({createAt: -1})
+        .sort({createdAt: -1})
         .limit(5)
         .populate('client', 'name');
 

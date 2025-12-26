@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const TaskSchema = new mongoose.Schema({
     title: {type: String, required: true},
     description: {type: String, default: ""},
+    dueDate: {type: Date},// Guarda el dia y la hora
     status:{
         type: String,
         enum: ['pending', 'in-progress', 'completed'],// permite estas tres opciones solo 

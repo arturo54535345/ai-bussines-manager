@@ -6,6 +6,12 @@ const ClientSchema = new mongoose.Schema({
     logoUrl: { type: String, default: ""}, 
     active: {type: Boolean, default: true},
 
+    category:{
+        type: String,
+        enum: ['Prospect', 'Active', 'VIP', 'Inactive'],
+        default: 'Prospect'
+    },
+
     //ficha tecnica de los clientes 
     technicalSheet: {
         industry: {type: String, required: true},

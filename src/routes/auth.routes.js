@@ -2,9 +2,11 @@
 const express = require('express');
 const router = express.Router();
 const authController = require( '../controllers/auth.controller');//trameos el cerbero
+const auth = require('../middlewares/auth.middleware');
 
 //cuando alguien envie datos POST a /register activara la funcion register
 router.post('/register', authController.register);
 router.post('/login', authController.login);
+router.put('/profile', auth, authController.updateProfile);
 
 module.exports = router;

@@ -61,3 +61,35 @@ exports.login = async (req, res) =>{
         res.status(500).json({message: 'Error en el servidor', error: error.message});
     }
 };
+
+//actualizar el usuario/ actualizar contraseña
+exports.updateProfile = async (req, res) =>{
+    try{
+        const {name, currentPassword, newPassword} = req.body;
+        const user =await User.findById(req.user.id);
+
+        if(!user) return res.status(404).json({message: "Usuario no encontrado"});
+
+        //si el usuario quiere cambiar su nombre
+        if(name) user.name = name;
+
+        //si el usuario quiere cambiar su contraseña
+        if(newPassword){
+            //Verificamos si envio su contraseña actual por seguridad
+            if(!currentPassword){
+                return res.status(400).json({message: "Debes dar tu contraseña actual para poder cambiarla"});
+            }
+            //aqui compruebo la actual con la que tenemos guardada
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if(!isMatch) return res.status(400).json({message: "La contraseña actual es incorrecta"});
+
+            //encriptamos la nueva contraseña
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(newPassword, salt);
+        }
+        await user.save();
+        res.json({message: " Perfil actualizado correctamente"});
+    }catch(error){
+        res.status(500).json({message: "Error al actualizar el perfil"});
+    }
+};
