@@ -21,17 +21,25 @@ exports.createClient = async (req, res) =>{
 //listar todos los clientes con el buscador o poniendole filtros 
 exports.getClients = async (req , res) =>{
     try{
-        const {search} = req.query;
+        const {search, page = 1, limit = 10} = req.query;//sacmos los datos mediante la url 
 
         //filtro que solo sea del dueño y que este vacio( se hace un borrado siempre )
         let query = {owner: req.user.id, active: true};
 
-        //si alguien busca un nombre usamos una expresion sencilla para que sea facil 
+        //si alguien busca un nombre usamos una expresion sencilla para que sea facil de encontrar da igual que pongas juan que JUAN 
         if(search){
             query.name = { $regex: search, $options: 'i'};
         }
-        const clients = await Client.find(query);
-        res.json(clients);
+        const clients = await Client.find(query)
+        .limit(limit * 1)//la cantidad de maxima que nos saldra en el buscador osea un max de 10 
+        .skip((page - 1)* limit)//cuantos nos saltamos
+        .sort({createdAt: -1});//esto hace que te salgan los mas nuevos primero
+
+        res.json({
+            total: await Client.countDocuments(query),
+            currentPage: page,
+            clients
+        });
     }catch(error){
         res.status(500).json({message: "Error al obtener los clientes"});
     }

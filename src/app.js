@@ -6,7 +6,7 @@ const authRoutes = require('./routes/auth.routes'); //rutas de autenticacion
 const clientsRoutes = require('./routes/clients.routes');//rutas de clientes
 const tasksRoutes = require('./routes/tasks.routes');//rutas de tareas
 const aiRoutes = require('./routes/ai.routes');//rutas de la ia 
-
+const dashboardRoutes = require('./routes/dashboard.routes');//rutas del dashboard
 //Middlewares(filtros)
 
 app.use(cors()); //permite que otras web se conecten con la nuestra 
@@ -15,6 +15,7 @@ app.use('/api/auth', authRoutes); //todas las rutas que empiecen con /api/auth s
 app.use('/api/clients', clientsRoutes);//permita que todas las rutas que empiecen con /api/clients sean menajadas por clientesRoutes
 app.use('/api/tasks', tasksRoutes);//permite que todas las rutas sean manejadas por tasksRoutes
 app.use('/api/ai', aiRoutes);//permite que todas las rutas sean manejadas por aiRoutes
+app.use('/api/dashboard', dashboardRoutes);
 
 //ruta de prueba 
 app.get('/', (req, res) => {
