@@ -5,21 +5,16 @@ const aiService = require('../services/ai.service');
 
 exports.getBusinessAdvice = async (req, res) =>{
     try{
-        //buscamos todos los clientes,tareas y actividades de este usauario
+        const { prompt } = req.body; // <--- Capturamos tu pregunta del Front
         const clients = await Client.find({owner:req.user.id});
         const tasks = await Task.find({owner:req.user.id});
-        const activities = await Activity.find({user: req.user.id})
-            .sort({createdAt: -1})
-            .limit(3);
+        const activities = await Activity.find({user: req.user.id}).sort({createdAt: -1}).limit(3);
 
-        const advice = await aiService.analyzeBusinessData(clients,tasks, activities);//le pasamos esos datos al servicio de IA para que lo analice
+        // Le pasamos tu pregunta al servicio
+        const advice = await aiService.analyzeBusinessData(clients, tasks, activities, prompt); 
 
-        //devolvemos la respuesta inteligente
-        res.json({
-            summary: `Negocio con ${clients.length} clientes y ${tasks.length} tareas.`,
-            aiAdvice: advice
-        });
-    }catch(error){
+        res.json({ aiAdvice: advice });
+    } catch(error) {
         res.status(500).json({message: "La IA no pudo procesar los datos"});
     }
 };

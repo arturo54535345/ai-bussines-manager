@@ -4,6 +4,7 @@ const bcrypt = require ('bcryptjs'); //trameos la herramienta para encriptar con
 
 /////////REGISTER/////////////
 exports.register = async (req, res) =>{
+    console.log("DATOS QUE LLEGAN AL BACKEND:", req.body);
     try{
         const {name,email,password} = req.body; //sacamos los datos que envio el usuario
         let userExists = await User.findOne({email});

@@ -8,15 +8,16 @@ const ClientSchema = new mongoose.Schema({
 
     category:{
         type: String,
-        enum: ['Prospect', 'Active', 'VIP', 'Inactive'],
-        default: 'Prospect'
+        // CORRECCIÓN: Añadimos 'Potencial' y 'General' para que coincida con el Front
+        enum: ['Prospect', 'Active', 'VIP', 'Inactive', 'Potencial', 'General'],
+        default: 'General'
     },
 
-    //ficha tecnica de los clientes 
     technicalSheet: {
-        industry: {type: String, required: true},
+        // CORRECCIÓN: Ponemos required: false para que no rompa el servidor
+        industry: {type: String, required: false},
         taxId: {type: String, required: false},
-        contactPerson: {type: String, required: true},
+        contactPerson: {type: String, required: false},
         website: {type: String},
         address: {type: String},
         notes: {type: String},
@@ -26,5 +27,3 @@ const ClientSchema = new mongoose.Schema({
 }, {timestamps: true});
 
 module.exports = mongoose.model('Client', ClientSchema);
-
-
