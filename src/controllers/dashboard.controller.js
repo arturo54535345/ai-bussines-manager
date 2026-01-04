@@ -1,26 +1,24 @@
-// 1. IMPORTACIONES: Traemos los modelos para poder consultar la base de datos
+// 1. HERRAMIENTAS: Traemos los modelos y el servicio de IA
 const Client = require('../models/Client');
 const Task = require('../models/Task');
 const Activity = require('../models/Activity');
+const User = require('../models/User'); 
+const aiService = require('../services/ai.service'); 
 
 exports.getStats = async (req, res) => {
     try {
         const userId = req.user.id;
         
-        // Calculamos la fecha de hace 7 días para el gráfico de barras
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        // Buscamos al usuario para saber su tono (Socio, Coach...) y sus metas
+        const user = await User.findById(userId);
 
-        // 2. RESUMEN DE CLIENTES
-        // Contamos cuántos clientes activos hay en total y por categoría
+        // --- A. CÁLCULO DE NÚMEROS (Esto es local y muy fiable) ---
         const clientSummary = {
             total: await Client.countDocuments({ owner: userId, active: true }),
             vips: await Client.countDocuments({ owner: userId, active: true, category: 'VIP' }),
             active: await Client.countDocuments({ owner: userId, active: true, category: 'Active' }),
         };
 
-        // 3. RESUMEN DE TAREAS
-        // Buscamos todas las tareas del usuario para filtrarlas por estado
         const tasks = await Task.find({ owner: userId });
         const taskSummary = {
             totalTasks: tasks.length,
@@ -28,40 +26,48 @@ exports.getStats = async (req, res) => {
             completed: tasks.filter(t => t.status === 'completed').length,
         };
 
-        // 4. LÓGICA DE TENDENCIA SEMANAL (Gráfico de barras)
-        // Buscamos las actividades de los últimos 7 días
-        const activities = await Activity.find({
-            user: userId,
-            createdAt: { $gte: sevenDaysAgo }
-        });
-
+        // --- B. LÓGICA DE TENDENCIA (Gráfico) ---
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const activities = await Activity.find({ user: userId, createdAt: { $gte: sevenDaysAgo } });
         const days = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
         const weeklyHistory = [];
-
-        // Bucle para construir la lista de los últimos 7 días con sus nombres
         for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            const dayName = days[d.getDay()];
-            
-            // Filtramos las actividades que ocurrieron en este día específico
-            const count = activities.filter(a => 
-                new Date(a.createdAt).toDateString() === d.toDateString()
-            ).length;
-
-            weeklyHistory.push({ day: dayName, acciones: count });
+            const d = new Date(); d.setDate(d.getDate() - i);
+            const count = activities.filter(a => new Date(a.createdAt).toDateString() === d.toDateString()).length;
+            weeklyHistory.push({ day: days[d.getDay()], acciones: count });
         }
 
-        // 5. RESPUESTA FINAL: Enviamos todo el paquete de datos al Frontend
+        // --- C. LA CAJA DE SEGURIDAD PARA LA IA ---
+        // Preparamos un mensaje por defecto por si Gemini falla
+        let aiInsight = "Arturo, tus datos están listos. Sigue así para alcanzar tus objetivos.";
+        
+        try {
+            // Intentamos obtener el consejo real. 
+            // Si esto falla, saltará al "catch" de aquí abajo pero NO detendrá el servidor.
+            const realAdvice = await aiService.getWeeklySummary(
+                { clientSummary, taskSummary }, 
+                user.preferences 
+            );
+            if (realAdvice) aiInsight = realAdvice;
+        } catch (aiError) {
+            // Si la IA falla, solo lo anotamos en la consola del servidor para que tú lo veas
+            console.error("Aviso: La IA no respondió a tiempo, usando mensaje por defecto.");
+        }
+
+        // 6. RESPUESTA FINAL: Enviamos todo el paquete.
+        // Como 'aiInsight' está fuera de la caja de error, siempre tendrá un valor.
         res.json({
             clientSummary,
             taskSummary,
             weeklyHistory, 
-            recentActivity: await Activity.find({ user: userId }).sort({ createdAt: -1 }).limit(10)
+            recentActivity: await Activity.find({ user: userId }).sort({ createdAt: -1 }).limit(10),
+            aiInsight 
         });
 
     } catch (error) {
-        console.error("Error en getStats:", error);
+        // Este error solo saltará si algo muy grave pasa con la base de datos
+        console.error("Error crítico en getStats:", error);
         res.status(500).json({ message: "Error al generar estadísticas" });
     }
 };
