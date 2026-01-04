@@ -14,7 +14,8 @@ const UserSchema = new mongoose.Schema({
             default: 'Socio'
         },
         monthlyGoal: {type: Number, default: 10},//añado una meta de tareas al mes
-        businessMotto: {type: String, default: "Mi vision de negocio"}//esto es un lema motivador 
+        businessMotto: {type: String, default: "Mi vision de negocio"},//esto es un lema motivador 
+        themeColor: {type: String, default: 'blue'} //color para cada perfil 
     }
 
 }, {timestamps: true});//esto anota automaticamente la fecha de creacion y de actualizacion del usuario
