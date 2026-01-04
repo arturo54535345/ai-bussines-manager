@@ -1,37 +1,34 @@
-const express = require('express'); //por asi decirlo es un recepcionista que recibe las peticiones y las envia a su destino
-const cors = require('cors'); // el guardia que permite que el front pueda comunicarse con el back
+const express = require('express'); // El recepcionista que organiza las peticiones.
+const cors = require('cors'); // El guardia de seguridad que permite la conexión entre Front y Back.
 
-const app = express(); //creamos la app
-const authRoutes = require('./routes/auth.routes'); //rutas de autenticacion
-const clientsRoutes = require('./routes/clients.routes');//rutas de clientes
-const tasksRoutes = require('./routes/tasks.routes');//rutas de tareas
-const aiRoutes = require('./routes/ai.routes');//rutas de la ia 
-const dashboardRoutes = require('./routes/dashboard.routes');//rutas del dashboard
-//Middlewares(filtros)
+const app = express(); // Creamos la aplicación.
 
-app.use(cors()); //permite que otras web se conecten con la nuestra 
-app.use(express.json()); //permite que nuestra web entienda cuando le envian datos en JSON 
-app.use('/api/auth', authRoutes); //todas las rutas que empiecen con /api/auth seran manejadas por authRoutes
-app.use('/api/clients', clientsRoutes);//permita que todas las rutas que empiecen con /api/clients sean menajadas por clientesRoutes
-app.use('/api/tasks', tasksRoutes);//permite que todas las rutas sean manejadas por tasksRoutes
-app.use('/api/ai', aiRoutes);//permite que todas las rutas sean manejadas por aiRoutes
+// 1. IMPORTACIÓN DE RUTAS (Las calles de nuestra ciudad)
+const authRoutes = require('./routes/auth.routes'); 
+const clientsRoutes = require('./routes/clients.routes');
+const tasksRoutes = require('./routes/tasks.routes');
+const aiRoutes = require('./routes/ai.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+
+// 2. MIDDLEWARES (Los filtros de seguridad y procesado)
+
+// Ajustamos el CORS para que el navegador confíe totalmente en nuestra llave 'x-auth-token'
+app.use(cors({
+    exposedHeaders: ['x-auth-token'] // Le decimos al navegador: "Deja que la web vea esta etiqueta"
+})); 
+
+app.use(express.json()); // Permite que el servidor entienda los datos en formato JSON (el idioma de la web).
+
+// 3. REGISTRO DE RUTAS (Asignamos cada dirección a su controlador)
+app.use('/api/auth', authRoutes); 
+app.use('/api/clients', clientsRoutes);
+app.use('/api/tasks', tasksRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-//ruta de prueba 
+// Ruta de prueba para saber si el motor arranca
 app.get('/', (req, res) => {
-    res.send("servidor funcionando correctamente");
+    res.send("Servidor funcionando correctamente. ¡Todo listo, Arturo!");
 });
 
-
-module.exports = app; //exportamos la app para usarlo a ver si todo esta okeys makey
-
-/**
-"message": "Login exitoso",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NGIyNjQ0YmY3MzBlZTdmNjA3MGJkZSIsImlhdCI6MTc2NjUzMjc5MiwiZXhwIjoxNzY2NTM2MzkyfQ.yEpF2DZwZOTfqqkjlamUQ_VXzRtAb7JEh-Iwn54J9js",
-    "user": {
-        "id": "694b2644bf730ee7f6070bde",
-        "name": "Arturo Prueba",
-        "email": "arturo@test.com"
-
-
- */
+module.exports = app; // Exportamos la app para que server.js la ponga a funcionar.

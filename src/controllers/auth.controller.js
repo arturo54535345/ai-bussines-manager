@@ -9,17 +9,14 @@ exports.register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        // ¿Ya existe este correo?
         let userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: 'Ese correo ya está registrado' });
         }
 
-        // Encriptamos la contraseña para que nadie pueda leerla
         const salt = await bcrypt.genSalt(10); 
         const hashedPassword = await bcrypt.hash(password, salt); 
 
-        // Creamos el nuevo usuario con sus preferencias por defecto
         const newUser = new User({
             name,
             email,
@@ -27,7 +24,19 @@ exports.register = async (req, res) => {
         });
 
         await newUser.save(); 
-        res.status(201).json({ message: '¡Cuenta creada con éxito!' });
+
+        // --- CORRECCIÓN: Generamos la llave también al registrarse ---
+        const token = jwt.sign(
+            { id: newUser._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.status(201).json({ 
+            message: '¡Cuenta creada!', 
+            token, 
+            user: { id: newUser._id, name: newUser.name, email: newUser.email, preferences: newUser.preferences } 
+        });
 
     } catch (error) {
         res.status(500).json({ message: 'Error al registrar', error: error.message });
