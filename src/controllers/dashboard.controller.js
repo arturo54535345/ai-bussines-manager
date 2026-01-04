@@ -1,17 +1,26 @@
+// 1. IMPORTACIONES: Traemos los modelos para poder consultar la base de datos
+const Client = require('../models/Client');
+const Task = require('../models/Task');
+const Activity = require('../models/Activity');
+
 exports.getStats = async (req, res) => {
     try {
         const userId = req.user.id;
+        
+        // Calculamos la fecha de hace 7 días para el gráfico de barras
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        // 1. RESUMEN GENERAL (Lo que ya tenías)
-        const totalClients = await Client.countDocuments({ owner: userId, active: true });
+        // 2. RESUMEN DE CLIENTES
+        // Contamos cuántos clientes activos hay en total y por categoría
         const clientSummary = {
-            total: totalClients,
+            total: await Client.countDocuments({ owner: userId, active: true }),
             vips: await Client.countDocuments({ owner: userId, active: true, category: 'VIP' }),
             active: await Client.countDocuments({ owner: userId, active: true, category: 'Active' }),
         };
 
+        // 3. RESUMEN DE TAREAS
+        // Buscamos todas las tareas del usuario para filtrarlas por estado
         const tasks = await Task.find({ owner: userId });
         const taskSummary = {
             totalTasks: tasks.length,
@@ -19,23 +28,23 @@ exports.getStats = async (req, res) => {
             completed: tasks.filter(t => t.status === 'completed').length,
         };
 
-        // 2. LÓGICA DE SUBIDAS Y BAJADAS (Últimos 7 días)
-        // Buscamos las actividades del usuario en la última semana
+        // 4. LÓGICA DE TENDENCIA SEMANAL (Gráfico de barras)
+        // Buscamos las actividades de los últimos 7 días
         const activities = await Activity.find({
             user: userId,
             createdAt: { $gte: sevenDaysAgo }
         });
 
-        // Creamos una lista con los nombres de los últimos 7 días
         const days = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
         const weeklyHistory = [];
 
+        // Bucle para construir la lista de los últimos 7 días con sus nombres
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             const dayName = days[d.getDay()];
             
-            // Contamos cuántas acciones hubo en este día específico
+            // Filtramos las actividades que ocurrieron en este día específico
             const count = activities.filter(a => 
                 new Date(a.createdAt).toDateString() === d.toDateString()
             ).length;
@@ -43,14 +52,16 @@ exports.getStats = async (req, res) => {
             weeklyHistory.push({ day: dayName, acciones: count });
         }
 
-        // 3. ENVIAMOS TODO AL FRONTEND
+        // 5. RESPUESTA FINAL: Enviamos todo el paquete de datos al Frontend
         res.json({
             clientSummary,
             taskSummary,
-            weeklyHistory, // Enviamos la nueva lista para el gráfico
+            weeklyHistory, 
             recentActivity: await Activity.find({ user: userId }).sort({ createdAt: -1 }).limit(10)
         });
+
     } catch (error) {
+        console.error("Error en getStats:", error);
         res.status(500).json({ message: "Error al generar estadísticas" });
     }
 };
