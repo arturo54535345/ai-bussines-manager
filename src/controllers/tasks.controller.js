@@ -24,13 +24,25 @@ exports.createTask = async (req, res) => {
 };
 
 //funcion para ver todas las tareas de un usuario 
-exports.getTasks = async (req, res) =>{
-    try{
-        const tasks = await Task.find({owner:req.user.id}).populate('client');//buscamos las tareas del dueño, usuario 
-        res.json(tasks);//retornamos las tareas encontradas
+exports.getTasks = async (req, res) => {
+    try {
+        const { search, priority } = req.query; // Leemos la búsqueda y la prioridad
+        let query = { owner: req.user.id };
 
-    }catch(error){
-        res.status(500).json({message: 'Error al obtener las tareas', error: error.message});
+        // Si Arturo escribe algo, buscamos por título (ignora mayúsculas)
+        if (search) {
+            query.title = { $regex: search, $options: 'i' };
+        }
+
+        // Si Arturo elige una prioridad (Alta, Media, Baja), filtramos
+        if (priority) {
+            query.priority = priority;
+        }
+
+        const tasks = await Task.find(query).populate('client', 'name');
+        res.json(tasks);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener las tareas" });
     }
 };
 
