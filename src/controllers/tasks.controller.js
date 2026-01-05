@@ -78,3 +78,21 @@ exports.deleteTask = async (req, res) =>{
         res.status(500).json({message: "Error al eliminar la tarea"});
     }
 };
+
+exports.getTaskById = async (req, res) =>{
+    try{
+        //busco la tarea mediante el id que me llega 
+        const task = await Task.findById(req.params.id);
+
+        //si no existe aviso
+        if(!task){
+            return res.status(404).json({message: "Tarea no encontrada"});
+        }
+
+        //si existe esta tarea se enviara al front
+        res.json(task);
+    }catch(error){
+        console.error(error);
+        res.status(500).json({message: "Error al buscar la tarea"});
+    }
+};

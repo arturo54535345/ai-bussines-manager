@@ -14,8 +14,11 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 
 // Ajustamos el CORS para que el navegador confíe totalmente en nuestra llave 'x-auth-token'
 app.use(cors({
-    exposedHeaders: ['x-auth-token'] // Le decimos al navegador: "Deja que la web vea esta etiqueta"
-})); 
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'x-auth-token'],
+    exposedHeaders: ['x-auth-token'] // Ordenamos que el sobre 'x-auth-token' sea visible
+}));
 
 app.use(express.json()); // Permite que el servidor entienda los datos en formato JSON (el idioma de la web).
 
