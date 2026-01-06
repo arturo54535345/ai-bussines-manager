@@ -1,24 +1,25 @@
-// 1. HERRAMIENTAS: Traemos los modelos y el servicio de IA
 const Client = require('../models/Client');
 const Task = require('../models/Task');
 const Activity = require('../models/Activity');
 const User = require('../models/User'); 
 const aiService = require('../services/ai.service'); 
 
+/**
+ * OBTENER ESTADÍSTICAS GENERALES
+ * Prepara los datos para los gráficos y las tarjetas de la web.
+ */
 exports.getStats = async (req, res) => {
     try {
         const userId = req.user.id;
-        
-        // Buscamos al usuario para saber su tono (Socio, Coach...) y sus metas
         const user = await User.findById(userId);
 
-        // --- A. CÁLCULO DE NÚMEROS (Esto es local y muy fiable) ---
+        // 1. RESUMEN DE CLIENTES
         const clientSummary = {
             total: await Client.countDocuments({ owner: userId, active: true }),
             vips: await Client.countDocuments({ owner: userId, active: true, category: 'VIP' }),
-            active: await Client.countDocuments({ owner: userId, active: true, category: 'Active' }),
         };
 
+        // 2. RESUMEN DE TAREAS
         const tasks = await Task.find({ owner: userId });
         const taskSummary = {
             totalTasks: tasks.length,
@@ -26,37 +27,42 @@ exports.getStats = async (req, res) => {
             completed: tasks.filter(t => t.status === 'completed').length,
         };
 
-        // --- B. LÓGICA DE TENDENCIA (Gráfico) ---
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const activities = await Activity.find({ user: userId, createdAt: { $gte: sevenDaysAgo } });
+        // 3. HISTORIAL DE 7 DÍAS (Para el gráfico de barras)
         const days = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
         const weeklyHistory = [];
+        
         for (let i = 6; i >= 0; i--) {
-            const d = new Date(); d.setDate(d.getDate() - i);
-            const count = activities.filter(a => new Date(a.createdAt).toDateString() === d.toDateString()).length;
+            const d = new Date(); 
+            d.setDate(d.getDate() - i);
+            
+            // Buscamos cuántas cosas hizo Arturo en este día específico
+            const count = await Activity.countDocuments({
+                user: userId,
+                createdAt: { 
+                    $gte: new Date(d.setHours(0,0,0,0)), 
+                    $lte: new Date(d.setHours(23,59,59,999)) 
+                }
+            });
+            
             weeklyHistory.push({ day: days[d.getDay()], acciones: count });
         }
 
-        // --- C. LA CAJA DE SEGURIDAD PARA LA IA ---
-        // Preparamos un mensaje por defecto por si Gemini falla
-        let aiInsight = "Arturo, tus datos están listos. Sigue así para alcanzar tus objetivos.";
+        // 4. CONSEJO DE IA PERSONALIZADO
+        let aiInsight = "Arturo, tus datos están listos. Sigue así.";
         
         try {
-            // Intentamos obtener el consejo real. 
-            // Si esto falla, saltará al "catch" de aquí abajo pero NO detendrá el servidor.
-            const realAdvice = await aiService.getWeeklySummary(
+            // 🟢 Le preguntamos a Groq basándonos en tus tareas reales
+            const userPreferences = user ? user.preferences : {};
+            const realAdvice = await aiService.getDashboardInsight(
                 { clientSummary, taskSummary }, 
-                user.preferences 
+                userPreferences
             );
             if (realAdvice) aiInsight = realAdvice;
         } catch (aiError) {
-            // Si la IA falla, solo lo anotamos en la consola del servidor para que tú lo veas
-            console.error("Aviso: La IA no respondió a tiempo, usando mensaje por defecto.");
+            console.error("Aviso: Groq no respondió para el Dashboard.");
         }
 
-        // 6. RESPUESTA FINAL: Enviamos todo el paquete.
-        // Como 'aiInsight' está fuera de la caja de error, siempre tendrá un valor.
+        // 5. ENVIAR TODO AL FRONTEND
         res.json({
             clientSummary,
             taskSummary,
@@ -66,8 +72,6 @@ exports.getStats = async (req, res) => {
         });
 
     } catch (error) {
-        // Este error solo saltará si algo muy grave pasa con la base de datos
-        console.error("Error crítico en getStats:", error);
         res.status(500).json({ message: "Error al generar estadísticas" });
     }
 };

@@ -1,5 +1,7 @@
 const express = require('express'); // El recepcionista que organiza las peticiones.
 const cors = require('cors'); // El guardia de seguridad que permite la conexión entre Front y Back.
+require("dotenv").config();
+console.log("Gemini key loaded:", !!process.env.GEMINI_API_KEY);
 
 const app = express(); // Creamos la aplicación.
 

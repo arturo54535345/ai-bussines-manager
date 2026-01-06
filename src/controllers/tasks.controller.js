@@ -1,43 +1,45 @@
-const Task = require('../models/Task');//importamos el modelo de Task 
+const Task = require('../models/Task');
+const aiService = require('../services/ai.service');
 const Activity = require('../models/Activity');
+const User = require('../models/User');
 
-//funcion para crear una tarea
+/**
+ * 1. CREAR TAREA
+ * Guarda un nuevo objetivo en la base de datos.
+ */
 exports.createTask = async (req, res) => {
-    try{
-        const {title, client, status, description, priority, dueDate} = req.body;//obtenemos los datos de la tarea desde el cuerpo de la peticion
-
+    try {
+        const { title, client, status, description, priority, dueDate, specifications } = req.body;
+        
         const newTask = new Task({
-            title,
-            description,//la informacion de la tarea
-            client,//el id del cliente al que pertenece
-            status,//el estado de la tarea
-            priority,//la prioridad de la tarea 
-            dueDate,//guardamos la fecha
-            owner: req.user.id//el id del usuario crea la tarea, viene del token
+            title, 
+            description, 
+            specifications, // 🟢 Vital para que la IA sepa qué hacer
+            client, 
+            status, 
+            priority, 
+            dueDate,
+            owner: req.user.id // La tarea pertenece a quien está logueado
         });
 
-        await newTask.save();//guardamos la tarea en la base de datos
-        res.status(201).json(newTask);//retornamos la tarea creada 
-    }catch(error){
-        res.status(500).json({message: 'Error al crear la tarea', error: error.message});//si hay un error retornamos un mensaje de error
+        await newTask.save();
+        res.status(201).json(newTask);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al crear la tarea', error: error.message });
     }
 };
 
-//funcion para ver todas las tareas de un usuario 
+/**
+ * 2. VER TODAS LAS TAREAS
+ * Trae la lista de tareas con filtros de búsqueda y prioridad.
+ */
 exports.getTasks = async (req, res) => {
     try {
-        const { search, priority } = req.query; // Leemos la búsqueda y la prioridad
+        const { search, priority } = req.query;
         let query = { owner: req.user.id };
 
-        // Si Arturo escribe algo, buscamos por título (ignora mayúsculas)
-        if (search) {
-            query.title = { $regex: search, $options: 'i' };
-        }
-
-        // Si Arturo elige una prioridad (Alta, Media, Baja), filtramos
-        if (priority) {
-            query.priority = priority;
-        }
+        if (search) query.title = { $regex: search, $options: 'i' };
+        if (priority) query.priority = priority;
 
         const tasks = await Task.find(query).populate('client', 'name');
         res.json(tasks);
@@ -46,53 +48,78 @@ exports.getTasks = async (req, res) => {
     }
 };
 
-//funcion para poder editar las tareas
-exports.updateTask = async (req, res) =>{
-    try{
+/**
+ * 3. ACTUALIZAR TAREA
+ * Cambia los datos o el estado. Si se completa, registra la actividad.
+ */
+exports.updateTask = async (req, res) => {
+    try {
         const task = await Task.findOneAndUpdate(
-            {_id: req.params.id, owner: req.user.id},
+            { _id: req.params.id, owner: req.user.id },
             req.body,
-            {new: true},
+            { new: true }
         );
-        if(req.body.status === 'completed'){
-        await new Activity({
-            user: req.user.id,
-            action: `Completo la tarea: ${task.title}`,
-            type: 'task'
-        }).save();
+
+        // 🟢 Si Arturo marca la tarea como hecha, avisamos al sistema de actividad
+        if (req.body.status === 'completed' && task) {
+            await new Activity({ 
+                user: req.user.id, 
+                action: `Completó: ${task.title}`, 
+                type: 'task' 
+            }).save();
         }
-        res.json(task)
-    }catch(error){
-        res.status(500).json({message: "Error al actualizar la tarea"});
-    }
-};
-
-//funcion para eleminar tareas
-exports.deleteTask = async (req, res) =>{
-    try{
-        const task = await Task.findOneAndDelete({_id: req.params.id, owner: req.user.id});
-        if(!task) return res.status(404).json({message: "Tarea no encontrada"});
-
-        res.json({message: "Tarea elminada correctamente"});
-    }catch(error){
-        res.status(500).json({message: "Error al eliminar la tarea"});
-    }
-};
-
-exports.getTaskById = async (req, res) =>{
-    try{
-        //busco la tarea mediante el id que me llega 
-        const task = await Task.findById(req.params.id);
-
-        //si no existe aviso
-        if(!task){
-            return res.status(404).json({message: "Tarea no encontrada"});
-        }
-
-        //si existe esta tarea se enviara al front
         res.json(task);
-    }catch(error){
-        console.error(error);
-        res.status(500).json({message: "Error al buscar la tarea"});
+    } catch (error) {
+        res.status(500).json({ message: "Error al actualizar" });
+    }
+};
+
+/**
+ * 4. ELIMINAR TAREA
+ */
+exports.deleteTask = async (req, res) => {
+    try {
+        const task = await Task.findOneAndDelete({ _id: req.params.id, owner: req.user.id });
+        if (!task) return res.status(404).json({ message: "No encontrada" });
+        res.json({ message: "Eliminada" });
+    } catch (error) {
+        res.status(500).json({ message: "Error al eliminar" });
+    }
+};
+
+/**
+ * 5. BUSCAR POR ID (Para editar)
+ */
+exports.getTaskById = async (req, res) => {
+    try {
+        const task = await Task.findById(req.params.id);
+        if (!task) return res.status(404).json({ message: "No encontrada" });
+        res.json(task);
+    } catch (error) {
+        res.status(500).json({ message: "Error al buscar" });
+    }
+};
+
+/**
+ * 6. ASISTENTE IA PARA TAREAS (El botón mágico)
+ * Conecta con Groq para darte un plan de acción detallado.
+ */
+exports.getTaskAdvice = async (req, res) => {
+    try {
+        // Buscamos la tarea específica
+        const task = await Task.findById(req.params.id);
+        if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
+
+        // Buscamos al usuario para saber si quiere un tono "Coach" o "Socio"
+        const user = await User.findById(req.user.id);
+        const userPreferences = user ? user.preferences : {};
+
+        // 🟢 LLAMADA AL SERVICIO: Le pasamos la tarea y tus gustos
+        const advice = await aiService.generateTaskPlan(task, userPreferences);
+
+        res.json({ advice });
+    } catch (error) {
+        console.error("Error en Asistente IA:", error.message);
+        res.status(500).json({ message: "La IA no pudo procesar el plan." });
     }
 };
