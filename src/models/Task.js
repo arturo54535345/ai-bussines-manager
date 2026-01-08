@@ -1,26 +1,72 @@
-const mongoose = require('mongoose');
+// -------------------------------------------------------------------------
+// 🏗️ SECCIÓN 1: IMPORTACIÓN
+// -------------------------------------------------------------------------
+const mongoose = require('mongoose'); // Traemos la herramienta que sabe hablar con la base de datos.
+
+// -------------------------------------------------------------------------
+// 📐 SECCIÓN 2: EL MOLDE (TaskSchema)
+// -------------------------------------------------------------------------
+// Imagina que esto es un molde de silicona. Cada vez que creas una tarea, 
+// tiene que encajar perfectamente en estos huecos.
 
 const TaskSchema = new mongoose.Schema({
-    title: {type: String, required: true},
-    description: {type: String, default: ""},
-    specifications: {type: String},
-    status:{
+    // El título es obligatorio (required: true). Sin nombre no hay tarea.
+    title: { type: String, required: true },
+    
+    // La descripción es texto. Si no pones nada, se guarda como un texto vacío "".
+    description: { type: String, default: "" },
+    
+    // Detalles extra o instrucciones para la IA.
+    specifications: { type: String },
+    
+    // ESTADO: Aquí controlamos si la tarea está pendiente o terminada.
+    status: {
         type: String,
-        enum: ['pending', 'in-progress', 'completed'],// permite estas tres opciones solo 
-        default: 'pending'// si no se pone nada se pone por defecto esta 
+        // 'enum' significa: "SOLO se permiten estas palabras exactas".
+        enum: ['pending', 'in-progress', 'completed'], 
+        default: 'pending' // Si no dices nada, nace como 'pendiente'.
     },
+
+    // PRIORIDAD: Importancia de la tarea.
     priority: {
         type: String,
         enum: ['low', 'medium', 'high'],
         default: 'medium',
     },
-    dueDate: {type: Date},
+
+    // CATEGORÍA: El tipo de trabajo (Llamada, Email...).
+    category: {
+        type: String,
+        // 🟢 CORRECCIÓN CLAVE: Hemos añadido las tildes para que coincidan con tu Frontend.
+        enum: ['Llamada', 'Reunión', 'Email', 'Administración', 'Catering', 'Otro'],
+        default: 'Otro'
+    },
+
+    // La fecha de vencimiento. Se guarda en formato de fecha de ordenador.
+    dueDate: { type: Date },
+
+    // NOTAS: Una lista de comentarios que puedes ir añadiendo.
     notes: [{
         content: String,
-        date: {type: Date, default: Date.now},
+        date: { type: Date, default: Date.now }, // Guarda la fecha del momento exacto del comentario.
     }],
-    client: {type:mongoose.Schema.Types.ObjectId, ref: 'Client'},
-    owner: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-}, {timestamps: true});
 
+    // 🔗 CONEXIONES (Relaciones)
+    // client: Guarda el ID de un cliente y "mira" hacia el archivador de Clientes.
+    client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client' },
+    
+    // owner: Guarda el ID del usuario que creó la tarea (Tú, Arturo).
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+}, { 
+    // timestamps: Esto crea automáticamente dos campos: 
+    // 1. Cuándo se creó la tarea (createdAt)
+    // 2. Cuándo se modificó por última vez (updatedAt)
+    timestamps: true 
+});
+
+// -------------------------------------------------------------------------
+// 🚀 SECCIÓN 3: EXPORTACIÓN
+// -------------------------------------------------------------------------
+// Convertimos este molde en un "Modelo" llamado 'Task' para poder usarlo en los controladores.
 module.exports = mongoose.model('Task', TaskSchema);

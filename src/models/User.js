@@ -7,11 +7,8 @@ const UserSchema = new mongoose.Schema({
 
     // Hemos puesto 'preferences' en plural para que la IA y el Perfil lo encuentren bien
     preferences: {
-        aiTone: {
-            type: String,
-            enum: ['Coach', 'Analista', 'Socio'],
-            default: 'Socio'
-        },
+        aiTone: { type: String, enum: ['Coach', 'Analista', 'Socio'], default: 'Socio' },
+        darkMode: { type: Boolean, default: false },
         monthlyGoal: { type: Number, default: 10 },
         businessMotto: { type: String, default: "Mi visión de negocio" },
         themeColor: { type: String, default: 'blue' }
