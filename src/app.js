@@ -11,6 +11,8 @@ const clientsRoutes = require('./routes/clients.routes');
 const tasksRoutes = require('./routes/tasks.routes');
 const aiRoutes = require('./routes/ai.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const financeRoutes = require('./routes/finance.routes');
+
 
 // 2. MIDDLEWARES (Los filtros de seguridad y procesado)
 
@@ -30,6 +32,7 @@ app.use('/api/clients', clientsRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/finance', financeRoutes);
 
 // Ruta de prueba para saber si el motor arranca
 app.get('/', (req, res) => {

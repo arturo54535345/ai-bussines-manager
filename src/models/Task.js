@@ -42,6 +42,18 @@ const TaskSchema = new mongoose.Schema({
         default: 'Otro'
     },
 
+    //Dinero que va a recibir el usuario por esta tarea
+    budget:{
+        type: Number,
+        default: 0
+    },
+
+    //Dinero que le cuesta al usuario realizar esa tarea
+    cost:{
+        type: Number,
+        default: 0
+    },
+
     // La fecha de vencimiento. Se guarda en formato de fecha de ordenador.
     dueDate: { type: Date },
 

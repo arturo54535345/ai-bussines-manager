@@ -1,6 +1,6 @@
 const Finance = require("../models/Finance");
 
-exports.getFinanceSummary = async (req, res) =>{
+exports.getFinancialSummary = async (req, res) =>{
     try{
         const userId = req.user.id;
         //se busca los movimientos de los usuarios
